@@ -14,13 +14,13 @@ import java.util.List;
 public class AlgumaParser {
 
     private final static int TAMANHO_BUFFER = 10;
-    List<Token> bufferTokens;
+    List < Token > bufferTokens;
     AlgumaLexico lex;
     boolean chegouNoFim = false;
 
     public AlgumaParser(AlgumaLexico lex) {
         this.lex = lex;
-        bufferTokens = new ArrayList<Token>();
+        bufferTokens = new ArrayList <>();
         lerToken();
     }
 
@@ -32,20 +32,12 @@ public class AlgumaParser {
             Token proximo = lex.proximoToken();
             bufferTokens.add(proximo);
             if (proximo.nome == TipoToken.Fim) {
-                chegouNoFim = true;
+                chegouNoFim = true; //SE FOR O FINAL
             }
         }
-        System.out.println("Lido:  " + lookahead(1));
+        System.out.println("Lido:  " + lookahead(1)); //IMPRIME NA TELA
     }
 
-    void match(TipoToken tipo) {
-        if (lookahead(1).nome == tipo) {
-            System.out.println("Match: " + lookahead(1));
-            lerToken();
-        } else {
-            erroSintatico(tipo.toString());
-        }
-    }
 
     Token lookahead(int k) {
         if (bufferTokens.isEmpty()) {
@@ -56,17 +48,28 @@ public class AlgumaParser {
         }
         return bufferTokens.get(k - 1);
     }
+    
+    void match(TipoToken tipo) {
+        if (lookahead(1).nome == tipo) {
+            System.out.println("Match: " + lookahead(1));
+            lerToken();
+        } else {
+            erroSintatico(tipo.toString());
+        }
+    }
 
     void erroSintatico(String... tokensEsperados) {
         String mensagem = "Erro sintático: esperando um dos seguintes (";
         for(int i=0;i<tokensEsperados.length;i++) {
             mensagem += tokensEsperados[i];
-            if(i<tokensEsperados.length-1)
+            if(i<tokensEsperados.length-1){
                 mensagem += ",";
+            }       
         }
         mensagem += "), mas foi encontrado " + lookahead(1);
         throw new RuntimeException(mensagem);
     }
+
     //programa : ':' 'DECLARACOES' listaDeclaracoes ':' 'ALGORITMO' listaComandos;
     public void programa() {
         match(TipoToken.Delim);
@@ -75,19 +78,15 @@ public class AlgumaParser {
         match(TipoToken.Delim);
         match(TipoToken.PCAlgoritmo);
         listaComandos();
-        match(TipoToken.Fim);
     }
 
     //listaDeclaracoes : declaracao listaDeclaracoes | declaracao;
     void listaDeclaracoes() {
-        // usaremos lookahead(4)
-        // Mas daria para fatorar à esquerda
-        // Veja na lista de comandos um exemplo
-        if (lookahead(4).nome == TipoToken.Delim) {
-            declaracao();
-        } else if (lookahead(4).nome == TipoToken.Var) {
+        if (lookahead(4).nome == TipoToken.Var) {
             declaracao();
             listaDeclaracoes();
+        } else if (lookahead(4).nome == TipoToken.Delim) {
+            declaracao();
         } else {
             erroSintatico(TipoToken.Delim.toString(), TipoToken.Var.toString());
         }
@@ -127,7 +126,8 @@ public class AlgumaParser {
         if (lookahead(1).nome == TipoToken.OPAritSoma || lookahead(1).nome == TipoToken.OPAritSub) {
             expressaoAritmetica2SubRegra1();
             expressaoAritmetica2();
-        } else { // vazio
+        } else { 
+          // vazio
         }
     }
 
@@ -156,7 +156,8 @@ public class AlgumaParser {
         if (lookahead(1).nome == TipoToken.OPAritMult || lookahead(1).nome == TipoToken.OPAritDiv) {
             termoAritmetico2SubRegra1();
             termoAritmetico2();
-        } else { // vazio
+        } else {
+            // vazio
         }
     }
 
@@ -185,7 +186,7 @@ public class AlgumaParser {
             expressaoAritmetica();
             match(TipoToken.FechaPar);
         } else {
-            erroSintatico(TipoToken.NumInt.toString(),TipoToken.NumReal.toString(),TipoToken.Var.toString(),"(");
+            erroSintatico("NumInt", "NumReal", "Variavel", "(");
         }
     }
 
@@ -203,7 +204,8 @@ public class AlgumaParser {
             operadorBooleano();
             termoRelacional();
             expressaoRelacional2();
-        } else { // vazio
+        } else { 
+           // vazio
         }
     }
 
@@ -213,11 +215,6 @@ public class AlgumaParser {
                 || lookahead(1).nome == TipoToken.NumReal
                 || lookahead(1).nome == TipoToken.Var
                 || lookahead(1).nome == TipoToken.AbrePar) {
-            // Há um não-determinismo aqui.
-            // AbrePar pode ocorrer tanto em expressaoAritmetica como em (expressaoRelacional)
-            // Tem uma forma de resolver este problema, mas não usaremos aqui
-            // Vamos modificar a linguagem, eliminando a possibilidade
-            // de agrupar expressões relacionais com parêntesis
             expressaoAritmetica();
             opRel();
             expressaoAritmetica();
@@ -256,8 +253,6 @@ public class AlgumaParser {
     }
 
     //listaComandos : comando listaComandos | comando;
-    // vamos fatorar à esquerda
-    // listaComandos : comando (listaComandos | <<vazio>>)
     void listaComandos() {
         comando();
         listaComandosSubRegra1();
